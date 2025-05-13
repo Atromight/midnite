@@ -11,4 +11,4 @@ lint:
 	poetry run flake8 .
 
 clean:
-	rm -rf wwe_api/__pycache__
+	rm -rf midnite_api/__pycache__
