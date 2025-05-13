@@ -13,11 +13,10 @@ that a user makes (withdraw or deposit) in our system.
 
 The objective of this API is to monitor the activity of users and throw alerts, based on the users actions. 
 Below are the possible alert codes currently supported:
-
-Code 1100: A withdraw amount over 100
-Code 30: 3 consecutive withdraws
-Code 300: 3 consecutive increasing deposits (ignoring withdraws)
-Code 123: Accumulative deposit amount over a window of 30 seconds is over 200
+* Code 1100: A withdraw amount over 100
+* Code 30: 3 consecutive withdraws
+* Code 300: 3 consecutive increasing deposits (ignoring withdraws)
+* Code 123: Accumulative deposit amount over a window of 30 seconds is over 200
 
 ### Endpoints
 Currently, the API supports 2 endpoints:
