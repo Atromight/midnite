@@ -45,14 +45,13 @@ def post_event(
     insert_event(db, event)
 
     alert = False
-    user_id = event.user_id
-    alert_codes = generate_alert_codes(db, user_id, event)
+    alert_codes = generate_alert_codes(db, event)
     if alert_codes:
         alert = True
 
     return EventResponse(
         alert=alert,
         alert_codes=alert_codes,
-        user_id=user_id
+        user_id=event.user_id
     )
     
