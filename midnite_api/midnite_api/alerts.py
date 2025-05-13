@@ -8,10 +8,7 @@ from midnite_api.models import Event
 from midnite_api.schemas import EventSchema
 
 
-def generate_alert_codes(
-    db: Session,
-    event: EventSchema
-) -> List[AlertCode]:
+def generate_alert_codes(db: Session, event: EventSchema) -> List[AlertCode]:
     alert_codes = []
     # For Code 1100: A withdraw amount over 100
     add_code_1100(alert_codes, event)
@@ -27,18 +24,13 @@ def generate_alert_codes(
 
     return alert_codes
 
-def add_code_1100(
-    alert_codes: List[AlertCode],
-    event: EventSchema
-):
+
+def add_code_1100(alert_codes: List[AlertCode], event: EventSchema):
     if event.type == EventType.WITHDRAW and event.amount > 100.00:
         alert_codes.append(AlertCode.CODE_1100)
 
-def add_code_30(
-    alert_codes: List[AlertCode],
-    event: EventSchema,
-    db: Session
-):
+
+def add_code_30(alert_codes: List[AlertCode], event: EventSchema, db: Session):
     # For Code 30: 3 consecutive withdraws
     results = (
         db.query(Event)
@@ -47,14 +39,13 @@ def add_code_30(
         .limit(3)
         .all()
     )
-    if len(results) == 3 and all(result.type == EventType.WITHDRAW for result in results):
+    if len(results) == 3 and all(
+        result.type == EventType.WITHDRAW for result in results
+    ):
         alert_codes.append(AlertCode.CODE_30)
 
-def add_code_300(
-    alert_codes: List[AlertCode],
-    event: EventSchema,
-    db: Session
-):
+
+def add_code_300(alert_codes: List[AlertCode], event: EventSchema, db: Session):
     results = (
         db.query(Event)
         .filter(
@@ -65,14 +56,13 @@ def add_code_300(
         .limit(3)
         .all()
     )
-    if len(results) == 3 and all(results[i].amount > results[i+1].amount for i in range(2)):
+    if len(results) == 3 and all(
+        results[i].amount > results[i + 1].amount for i in range(2)
+    ):
         alert_codes.append(AlertCode.CODE_300)
 
-def add_code_123(
-    alert_codes: List[AlertCode],
-    event: EventSchema,
-    db: Session
-):
+
+def add_code_123(alert_codes: List[AlertCode], event: EventSchema, db: Session):
     min_t = event.t - 30
     deposit_sum = (
         db.query(func.sum(Event.amount))
@@ -85,4 +75,3 @@ def add_code_123(
     )
     if deposit_sum and deposit_sum >= 200.0:
         alert_codes.append(AlertCode.CODE_123)
-

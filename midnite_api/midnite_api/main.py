@@ -20,21 +20,15 @@ async def db_init(app: FastAPI):
     # Shutdown
     print("Shutting down...")
 
+
 app = FastAPI(lifespan=db_init)
 
-@app.get("/")
-async def root():
-    return {"message": "Welcome to the Midnite API!"}
 
 @app.get("/events")
-def get_events(
-    db: Annotated[Session, Depends(get_db)]
-) -> EventsResponse:
+def get_events(db: Annotated[Session, Depends(get_db)]) -> EventsResponse:
     query = db.query(Event)
     events = query.all()
-    return EventsResponse(
-        events=[EventSchema.from_orm(event) for event in events]
-    )
+    return EventsResponse(events=[EventSchema.from_orm(event) for event in events])
 
 
 @app.post("/event")
@@ -49,9 +43,4 @@ def post_event(
     if alert_codes:
         alert = True
 
-    return EventResponse(
-        alert=alert,
-        alert_codes=alert_codes,
-        user_id=event.user_id
-    )
-    
+    return EventResponse(alert=alert, alert_codes=alert_codes, user_id=event.user_id)
