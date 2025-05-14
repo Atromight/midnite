@@ -4,12 +4,12 @@ from typing import List
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from midnite_api.const import AlertCode, EventType
+from midnite_api.const import AlertCode, APP_NAME, EventType
 from midnite_api.models import Event
 from midnite_api.schemas import EventSchema
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(APP_NAME)
 
 
 def generate_alert_codes(db: Session, event: EventSchema) -> List[AlertCode]:
@@ -33,6 +33,7 @@ def generate_alert_codes(db: Session, event: EventSchema) -> List[AlertCode]:
     Raises:
         Exception: If any unexpected error occurs during alert code generation.
     """
+    logger.info("Generating alert codes...")
     alert_codes = []
     try:
         add_code_1100(alert_codes, event)
@@ -57,6 +58,7 @@ def add_code_1100(alert_codes: List[AlertCode], event: EventSchema):
     """
     try:
         if event.type == EventType.WITHDRAW and event.amount >= 100.00:
+            logger.info(f"Adding Code: {AlertCode.CODE_1100} to alert_codes")
             alert_codes.append(AlertCode.CODE_1100)
 
     except Exception as e:
@@ -86,6 +88,7 @@ def add_code_30(alert_codes: List[AlertCode], event: EventSchema, db: Session):
         if len(results) == 3 and all(
             result.type == EventType.WITHDRAW for result in results
         ):
+            logger.info(f"Adding Code: {AlertCode.CODE_30} to alert_codes")
             alert_codes.append(AlertCode.CODE_30)
 
     except Exception as e:
@@ -116,6 +119,7 @@ def add_code_300(alert_codes: List[AlertCode], event: EventSchema, db: Session):
         if len(results) == 3 and all(
             results[i].amount > results[i + 1].amount for i in range(2)
         ):
+            logger.info(f"Adding Code: {AlertCode.CODE_300} to alert_codes")
             alert_codes.append(AlertCode.CODE_300)
 
     except Exception as e:
@@ -144,6 +148,7 @@ def add_code_123(alert_codes: List[AlertCode], event: EventSchema, db: Session):
             .scalar()
         )
         if deposit_sum and deposit_sum >= 200.0:
+            logger.info(f"Adding Code: {AlertCode.CODE_123} to alert_codes")
             alert_codes.append(AlertCode.CODE_123)
 
     except Exception as e:

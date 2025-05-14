@@ -1,6 +1,8 @@
 from enum import IntEnum, StrEnum
 
 
+APP_NAME = "midnite_api"
+
 class AlertCode(IntEnum):
     CODE_30 = 30  # 3 consecutive withdraws
     CODE_123 = (

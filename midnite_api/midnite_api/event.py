@@ -5,11 +5,12 @@ from sqlalchemy import func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from midnite_api.const import APP_NAME
 from midnite_api.models import Event
 from midnite_api.schemas import EventSchema
 
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(APP_NAME)
 
 
 def insert_event(db: Session, event: EventSchema):
@@ -27,6 +28,7 @@ def insert_event(db: Session, event: EventSchema):
         SQLAlchemyError: If the database transaction fails.
     """
     try:
+        logger.info(f"Inserting event: {event.dict()} to DB")
         new_event = Event(
             type=event.type, amount=event.amount, user_id=event.user_id, t=event.t
         )

@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 import logging
+import logging.config
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, status
@@ -8,13 +9,16 @@ from sqlalchemy.orm import Session
 
 from midnite_api.alerts import generate_alert_codes
 from midnite_api.cache import cache
+from midnite_api.const import APP_NAME
 from midnite_api.db import Base, engine, get_db, SessionLocal
 from midnite_api.event import insert_event
+from midnite_api.logger import LOGGING_CONFIG
 from midnite_api.models import Event
 from midnite_api.schemas import EventResponse, EventSchema
 
 
-logger = logging.getLogger(__name__)
+logging.config.dictConfig(LOGGING_CONFIG)
+logger = logging.getLogger(APP_NAME)
 
 
 @asynccontextmanager
@@ -81,7 +85,6 @@ def post_event(
             - 500 for any unexpected server error.
     """
     try:
-        # Validate new event.t
         latest_t = cache.get_latest_t()
         if latest_t is not None and event.t <= latest_t:
             logger.warning(
