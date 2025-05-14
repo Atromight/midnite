@@ -13,6 +13,11 @@ Base = declarative_base()
 
 
 def get_db():
+    """
+    Dependency that provides a database session.
+
+    Yields a SQLAlchemy session and ensures it is properly closed after the request is completed.
+    """
     db = SessionLocal()
     try:
         yield db

@@ -19,7 +19,3 @@ class EventResponse(BaseModel):
     alert: bool
     alert_codes: List[AlertCode] = []
     user_id: int
-
-
-class EventsResponse(BaseModel):
-    events: List[EventSchema]

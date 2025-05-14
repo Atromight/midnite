@@ -11,7 +11,7 @@ from midnite_api.cache import cache
 from midnite_api.db import Base, engine, get_db, SessionLocal
 from midnite_api.event import insert_event
 from midnite_api.models import Event
-from midnite_api.schemas import EventResponse, EventsResponse, EventSchema
+from midnite_api.schemas import EventResponse, EventSchema
 
 
 logger = logging.getLogger(__name__)
@@ -19,11 +19,19 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # STARTUP
+    """
+    FastAPI application lifespan handler.
+
+    This function is called on application startup and shutdown. On startup,
+    it initializes the database schema (creates tables) and sets up the in-memory
+    cache with the latest event timestamp (`t`) if any events exist.
+
+    Args:
+        app (FastAPI): The FastAPI application instance.
+    """
     logger.info("Creating tables and initializing cache...")
     Base.metadata.create_all(bind=engine)
 
-    # Init cache with latest `t`
     db: Session = SessionLocal()
     try:
         latest_t = db.query(Event.t).order_by(Event.t.desc()).limit(1).scalar()
@@ -39,20 +47,12 @@ async def lifespan(app: FastAPI):
     finally:
         db.close()
 
-    yield  # Run the app
+    yield
 
-    # SHUTDOWN
     logger.info("Shutting down...")
 
 
 app = FastAPI(lifespan=lifespan)
-
-
-@app.get("/events")
-def get_events(db: Annotated[Session, Depends(get_db)]) -> EventsResponse:
-    query = db.query(Event)
-    events = query.all()
-    return EventsResponse(events=[EventSchema.from_orm(event) for event in events])
 
 
 @app.post("/event", status_code=status.HTTP_201_CREATED)
@@ -60,14 +60,36 @@ def post_event(
     event: EventSchema,
     db: Annotated[Session, Depends(get_db)],
 ) -> EventResponse:
+    """
+    Handles POST request for a new financial event and checks for alert conditions.
+
+    Validates that the event's timestamp (`t`) is strictly increasing relative to
+    the latest processed event. If valid, stores the event in the database,
+    updates the cache, and evaluates applicable alert codes.
+
+    Args:
+        event (EventSchema): The incoming financial event payload.
+        db (Session): SQLAlchemy database session dependency.
+
+    Returns:
+        EventResponse: A response indicating whether any alerts were triggered and
+        which alert codes were matched.
+
+    Raises:
+        HTTPException:
+            - 400 if the event's `t` is not strictly increasing.
+            - 500 for any unexpected server error.
+    """
     try:
         # Validate new event.t
         latest_t = cache.get_latest_t()
         if latest_t is not None and event.t <= latest_t:
-            logger.warning(f"Rejected event with t={event.t}: must be strictly greater than last t={latest_t}")
+            logger.warning(
+                f"Rejected event with t={event.t}: must be strictly greater than last t={latest_t}"
+            )
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid event time t: must be strictly increasing."
+                detail=f"Invalid event time t: must be strictly increasing.",
             )
 
         insert_event(db, event)
@@ -78,7 +100,9 @@ def post_event(
         if alert_codes:
             alert = True
 
-        return EventResponse(alert=alert, alert_codes=alert_codes, user_id=event.user_id)
+        return EventResponse(
+            alert=alert, alert_codes=alert_codes, user_id=event.user_id
+        )
 
     except HTTPException as e:
         raise e

@@ -11,19 +11,33 @@ from midnite_api.schemas import EventSchema
 
 logger = logging.getLogger(__name__)
 
+
 def generate_alert_codes(db: Session, event: EventSchema) -> List[AlertCode]:
+    """
+    Generates alert codes for a given financial event.
+
+    This function checks the event against a predefined set of rules and returns
+    a list of applicable alert codes. It handles logic for:
+      - Code 1100: Withdrawal over 100
+      - Code 30: 3 consecutive withdrawals
+      - Code 300: Last 3 deposits have been increasing over time
+      - Code 123: Accumulated deposits' amount is over 200 in a 30-second window
+
+    Args:
+        db (Session): SQLAlchemy session used to query historical event data.
+        event (EventSchema): The event to analyze for potential alerts.
+
+    Returns:
+        List[AlertCode]: A list of triggered alert codes for the given event.
+
+    Raises:
+        Exception: If any unexpected error occurs during alert code generation.
+    """
     alert_codes = []
     try:
-        # For Code 1100: A withdraw amount over 100
         add_code_1100(alert_codes, event)
-
-        # For Code 30: 3 consecutive withdraws
         add_code_30(alert_codes, event, db)
-
-        # For Code 300: 3 consecutive increasing deposits (ignoring withdraws)
         add_code_300(alert_codes, event, db)
-
-        # For Code 123: Accumulative deposit amount over a window of 30 seconds is over 200
         add_code_123(alert_codes, event, db)
 
     except Exception as e:
@@ -34,16 +48,33 @@ def generate_alert_codes(db: Session, event: EventSchema) -> List[AlertCode]:
 
 
 def add_code_1100(alert_codes: List[AlertCode], event: EventSchema):
+    """
+    Appends alert code 1100 if the user made a withdraw of 100 or more.
+
+    Args:
+        alert_codes: The list to which alert codes are appended.
+        event: The current event (transaction) being processed.
+    """
     try:
-        if event.type == EventType.WITHDRAW and event.amount > 100.00:
+        if event.type == EventType.WITHDRAW and event.amount >= 100.00:
             alert_codes.append(AlertCode.CODE_1100)
 
     except Exception as e:
-        logger.error(f"Error while trying to generate alert code: {AlertCode.CODE_1100}")
+        logger.error(
+            f"Error while trying to generate alert code: {AlertCode.CODE_1100}"
+        )
         raise e
 
 
 def add_code_30(alert_codes: List[AlertCode], event: EventSchema, db: Session):
+    """
+    Appends alert code 30 if the user has made 3 consecutive withdraws.
+
+    Args:
+        alert_codes: The list to which alert codes are appended.
+        event: The current event (transaction) being processed.
+        db: SQLAlchemy session for querying past events.
+    """
     try:
         results = (
             db.query(Event)
@@ -63,6 +94,14 @@ def add_code_30(alert_codes: List[AlertCode], event: EventSchema, db: Session):
 
 
 def add_code_300(alert_codes: List[AlertCode], event: EventSchema, db: Session):
+    """
+    Appends alert code 300 if the user's last 3 deposits have been increasing.
+
+    Args:
+        alert_codes: The list to which alert codes are appended.
+        event: The current event (transaction) being processed.
+        db: SQLAlchemy session for querying past events.
+    """
     try:
         results = (
             db.query(Event)
@@ -83,7 +122,16 @@ def add_code_300(alert_codes: List[AlertCode], event: EventSchema, db: Session):
         logger.error(f"Error while trying to generate alert code: {AlertCode.CODE_300}")
         raise e
 
+
 def add_code_123(alert_codes: List[AlertCode], event: EventSchema, db: Session):
+    """
+    Appends alert code 123 if the user's deposit total in the last 30s is over 200.
+
+    Args:
+        alert_codes: The list to which alert codes are appended.
+        event: The current event (transaction) being processed.
+        db: SQLAlchemy session for querying past events.
+    """
     try:
         min_t = event.t - 30
         deposit_sum = (
