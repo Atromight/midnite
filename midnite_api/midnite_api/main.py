@@ -13,6 +13,7 @@ from midnite_api.const import APP_NAME
 from midnite_api.db import Base, engine, get_db, SessionLocal
 from midnite_api.event import insert_event
 from midnite_api.logger import LOGGING_CONFIG
+from midnite_api.middleware import RequestIDMiddleware
 from midnite_api.models import Event
 from midnite_api.schemas import EventResponse, EventSchema
 
@@ -57,6 +58,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+app.add_middleware(RequestIDMiddleware)
 
 
 @app.post("/event", status_code=status.HTTP_201_CREATED)
@@ -84,6 +86,7 @@ def post_event(
             - 400 if the event's `t` is not strictly increasing.
             - 500 for any unexpected server error.
     """
+    logger.info(f"Received event: {event.dict()}")
     try:
         latest_t = cache.get_latest_t()
         if latest_t is not None and event.t <= latest_t:
