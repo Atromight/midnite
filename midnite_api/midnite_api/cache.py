@@ -20,6 +20,10 @@ class Cache:
             if self._latest_t is None or t > self._latest_t:
                 self._latest_t = t
 
+    def clear(self):
+        with self._lock:
+            self._latest_t = None
+
 
 # Create a global cache instance to be used across your app
 cache = Cache()

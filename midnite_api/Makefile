@@ -1,3 +1,5 @@
+.PHONY: format lint test check
+
 ENTRY_POINT := "midnite_api.main:app"
 SERVER_PORT := 5000
 
@@ -9,6 +11,11 @@ format:
 
 lint:
 	poetry run flake8 .
+
+test:
+	poetry run pytest
+
+check: format lint test
 
 clean:
 	rm -rf midnite_api/__pycache__ midnite_api/app.db

@@ -1,4 +1,4 @@
-from typing import List
+from typing import Set
 
 from pydantic import BaseModel
 
@@ -17,5 +17,5 @@ class EventSchema(BaseModel):
 
 class EventResponse(BaseModel):
     alert: bool
-    alert_codes: List[AlertCode] = []
+    alert_codes: Set[AlertCode] = set()
     user_id: int
