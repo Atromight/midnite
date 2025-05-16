@@ -57,4 +57,3 @@ LOGGING_CONFIG = {
 
 
 dictConfig(LOGGING_CONFIG)
-logger = logging.getLogger("your_app")  # Use this in your code
