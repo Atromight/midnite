@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 
 from midnite_api.const import AlertCode, APP_NAME, EventType
 from midnite_api.event import (
-    fetch_latest_n_user_events,
     fetch_latest_n_user_deposits,
+    fetch_latest_n_user_events,
     fetch_sum_user_deposits_min_t,
 )
 from midnite_api.schemas import EventSchema

@@ -9,7 +9,7 @@ from midnite_api.cache import cache
 from midnite_api.const import APP_NAME
 from midnite_api.db import get_db
 from midnite_api.event import insert_event
-from midnite_api.schemas import EventSchema, EventResponse
+from midnite_api.schemas import EventResponse, EventSchema
 
 
 logger = logging.getLogger(APP_NAME)
