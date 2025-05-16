@@ -25,5 +25,4 @@ class Cache:
             self._latest_t = None
 
 
-# Create a global cache instance to be used across your app
 cache = Cache()

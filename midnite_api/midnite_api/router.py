@@ -7,10 +7,10 @@ from sqlalchemy.orm import Session
 from midnite_api.alerts import generate_alert_codes
 from midnite_api.cache import cache
 from midnite_api.const import APP_NAME
+from midnite_api.db import get_db
 from midnite_api.event import insert_event
 from midnite_api.schemas import EventSchema, EventResponse
-from midnite_api.db import get_db
-from midnite_api.cache import cache
+
 
 logger = logging.getLogger(APP_NAME)
 
@@ -51,7 +51,7 @@ def post_event(
             )
             raise HTTPException(
                 status_code=400,
-                detail=f"Invalid event time t: must be strictly increasing.",
+                detail="Invalid event time t: must be strictly increasing.",
             )
 
         insert_event(db, event)

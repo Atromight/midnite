@@ -1,11 +1,14 @@
 import logging
 from typing import Set
 
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from midnite_api.const import AlertCode, APP_NAME, EventType
-from midnite_api.models import Event
+from midnite_api.event import (
+    fetch_latest_n_user_events,
+    fetch_latest_n_user_deposits,
+    fetch_sum_user_deposits_min_t,
+)
 from midnite_api.schemas import EventSchema
 
 
@@ -78,13 +81,8 @@ def add_code_30(alert_codes: Set[AlertCode], event: EventSchema, db: Session):
         db: SQLAlchemy session for querying past events.
     """
     try:
-        results = (
-            db.query(Event)
-            .filter(Event.user_id == event.user_id)
-            .order_by(Event.t.desc())
-            .limit(3)
-            .all()
-        )
+        results = fetch_latest_n_user_events(db, event.user_id, 3)
+
         if len(results) == 3 and all(
             result.type == EventType.WITHDRAW for result in results
         ):
@@ -106,16 +104,7 @@ def add_code_300(alert_codes: Set[AlertCode], event: EventSchema, db: Session):
         db: SQLAlchemy session for querying past events.
     """
     try:
-        results = (
-            db.query(Event)
-            .filter(
-                Event.user_id == event.user_id,
-                Event.type == EventType.DEPOSIT,
-            )
-            .order_by(Event.t.desc())
-            .limit(3)
-            .all()
-        )
+        results = fetch_latest_n_user_deposits(db, event.user_id, 3)
         if len(results) == 3 and all(
             results[i].amount > results[i + 1].amount for i in range(2)
         ):
@@ -138,15 +127,7 @@ def add_code_123(alert_codes: Set[AlertCode], event: EventSchema, db: Session):
     """
     try:
         min_t = event.t - 30
-        deposit_sum = (
-            db.query(func.sum(Event.amount))
-            .filter(
-                Event.user_id == event.user_id,
-                Event.type == EventType.DEPOSIT,
-                Event.t >= min_t,
-            )
-            .scalar()
-        )
+        deposit_sum = fetch_sum_user_deposits_min_t(db, event.user_id, min_t)
         if deposit_sum and deposit_sum >= 200.0:
             logger.info(f"Adding Code: {AlertCode.CODE_123} to alert_codes")
             alert_codes.add(AlertCode.CODE_123)
